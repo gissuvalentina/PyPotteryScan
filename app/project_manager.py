@@ -505,3 +505,108 @@ class ProjectManager:
         except Exception as e:
             print(f"Error loading few-shot examples: {e}")
             return None
+
+    def get_master_project_data(self, project_id: str) -> List[Dict]:
+        """
+        Create a "master" json file.
+        One entry per image, containing the full text and a list of bounding boxes.
+        """
+        master_data = []
+        
+        # Define path
+        annotations_path = self.get_project_path(project_id, 'annotations')
+        ocr_results_file = self.get_project_path(project_id, 'ocr_results') / "ocr_results.json"
+        ocr_corrections_file = self.get_project_path(project_id, 'ocr_results') / "ocr_corrections.json"
+
+        # 1. Load lookups (corrections and olmocr's transcribed text)
+        ocr_lookup = {}
+        if ocr_results_file.exists():
+            try:
+                with open(ocr_results_file, 'r', encoding='utf-8') as f:
+                    results_list = json.load(f)
+                    ocr_lookup = {item['key']: item['texts'] for item in results_list if 'key' in item}
+            except Exception: ocr_lookup = {}
+
+        ocr_corrections = {}
+        if ocr_corrections_file.exists():
+            try:
+                with open(ocr_corrections_file, 'r', encoding='utf-8') as f:
+                    ocr_corrections = json.load(f)
+            except Exception: ocr_corrections = {}
+
+        if not annotations_path or not annotations_path.exists():
+            return []
+
+        # 2. Go through annotations (drawing and all corresponding text boxes (line-by-line)) and build hierarchy
+        for json_file in sorted(annotations_path.glob("*_annotations.json")):
+            try:
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    base_stem = json_file.name.replace("_annotations.json", "")
+                    img_filename = f"{base_stem}.jpg" 
+                    
+                    # Prepare object for scan (image)
+                    image_entry = {
+                        "image": img_filename,
+                        "table_name": data.get('metadata', {}).get('tableName', ''),
+                        "context": data.get('metadata', {}).get('context', ''),
+                        "full_text_corrected": "",
+                        "full_text_original": "", 
+                        "drawings": []
+                    }
+                    
+                    all_corrected_parts = []
+                    all_original_parts = []
+                    
+                    for d_idx, drawing in enumerate(data.get('drawings', [])):
+                        drawing_num = d_idx + 1
+                        drawing_key = f"{img_filename}_d{drawing_num}"
+                        
+                        drawing_entry = {
+                            "drawing_index": drawing_num,
+                            "vessel_coords": {"x": drawing.get('x'), "y": drawing.get('y'), "w": drawing.get('w'), "h": drawing.get('h')},
+                            "text_boxes": []
+                        }
+                        
+                        for t_idx, box in enumerate(drawing.get('textBoxes', [])):
+                            text_num = t_idx + 1
+                            full_text_key = f"{drawing_key}_t{text_num}"
+                            
+                            # Find original text
+                            original = ""
+                            if drawing_key in ocr_lookup:
+                                texts = ocr_lookup[drawing_key]
+                                if t_idx < len(texts):
+                                    original = texts[t_idx]
+                            
+                            # Find text corrections
+                            corrected = ocr_corrections.get(full_text_key, original)
+                            
+                            # Collect for whole text
+                            if original: all_original_parts.append(original)
+                            if corrected: all_corrected_parts.append(corrected)
+                            
+                            # Add box to drawing entry
+                            drawing_entry["text_boxes"].append({
+                                "box_index": text_num,
+                                "x": box.get('x'),
+                                "y": box.get('y'),
+                                "w": box.get('w'),
+                                "h": box.get('h'),
+                                "original_ocr": original,
+                                "corrected_ocr": corrected,
+                                "is_corrected": full_text_key in ocr_corrections
+                            })
+                        
+                        image_entry["drawings"].append(drawing_entry)
+                    
+                    # Finalize whole text entry of a drawing joined by \n (because we only extract text line-wise) 
+                    image_entry["full_text_corrected"] = "\n".join(all_corrected_parts)
+                    image_entry["full_text_original"] = "\n".join(all_original_parts)
+                    
+                    master_data.append(image_entry)
+                    
+            except Exception as e:
+                print(f"Error in json file: {json_file.name}: {e}")
+                
+        return master_data

@@ -630,10 +630,17 @@
                                 placeholder="e.g., SantaGiulia_2015">
                         </div>
 
-                        <button id="exportBtn"
-                            class="px-8 py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-lg">
-                            Save to Folder
-                        </button>
+                        <div class="flex flex-wrap justify-center gap-4">
+                            <button id="exportBtn"
+                                class="px-8 py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-lg">
+                                Save to Folder (Images + Excel)
+                            </button>
+                            
+                            <button id="exportJsonBtn"
+                                class="px-8 py-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-lg">
+                                { } Export Master JSON
+                            </button>
+                        </div>
 
                         <button id="proceedParserBtn"
                             class="mt-4 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 hidden">
@@ -3319,6 +3326,55 @@
             enableTab('export');
             switchTab('export');
             updateExportSummary();
+        });
+
+        // Event Listener für "master" json export
+        document.getElementById('exportJsonBtn').addEventListener('click', async () => {
+            if (!currentProject) {
+                alert("Please open a project first.");
+                return;
+            }
+
+            const btn = document.getElementById('exportJsonBtn');
+            const originalText = btn.textContent;
+            
+            try {
+                btn.disabled = true;
+                btn.textContent = '⏳ Generating...';
+
+                const response = await fetch(`/api/project/${currentProject.project_id}/export_master_json`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json(); 
+                    throw new Error(errorData.error || 'Export failed');
+                }
+                
+                // call .json() only one time
+                const result = await response.json();
+
+                console.log("Export Data:", result);
+
+                const exportData = result.results ? result.results : result;
+
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+                
+                a.href = url;
+                a.download = `${currentProject.project_name}_master_data_${timestamp}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+            } catch (err) {
+                console.error('JSON Export Error:', err);
+                alert('❌ Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
         });
 
         // TAB 6: Export (FIXED)
