@@ -341,8 +341,8 @@ class ModelManager:
                     trust_remote_code=True,
                     device_map="auto",
                     torch_dtype=torch.float16,
-                    low_cpu_mem_usage=True,
-                    max_memory={0: "10GB", "cpu": "16GB"}
+                    low_cpu_mem_usage=True#,
+                    #max_memory={0: "10GB", "cpu": "16GB"}
                 )
             else:
                 logger.warning("⚠️  CUDA not available - using CPU (will be SLOW)")
