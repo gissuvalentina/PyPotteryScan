@@ -3328,7 +3328,7 @@
             updateExportSummary();
         });
 
-        // Event Listener für "master" json export
+        // Event Listener for Master-JSON Export
         document.getElementById('exportJsonBtn').addEventListener('click', async () => {
             if (!currentProject) {
                 alert("Please open a project first.");
@@ -3349,20 +3349,21 @@
                     throw new Error(errorData.error || 'Export failed');
                 }
                 
-                // call .json() only one time
                 const result = await response.json();
 
-                console.log("Export Data:", result);
+                console.log('Export Data:', result);
 
                 const exportData = result.results ? result.results : result;
 
                 const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
+
+                const prefix = document.getElementById('exportPrefix').value || 'ceramic';
                 const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
                 
                 a.href = url;
-                a.download = `${currentProject.project_name}_master_data_${timestamp}.json`;
+                a.download = `${currentProject.project_name}_${prefix}master_data_${timestamp}.json`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
