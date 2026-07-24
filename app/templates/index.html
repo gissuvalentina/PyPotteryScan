@@ -2675,7 +2675,7 @@
 
         // Skip OCR button - proceed directly to manual input
         document.getElementById('skipOcrBtn').addEventListener('click', () => {
-            if (confirm('Skip OCR and input text manually in Review tab?')) {
+            //if (confirm('Skip OCR and input text manually in Review tab?')) {
                 const log = document.getElementById('ocrLog');
                 log.classList.remove('hidden');
                 log.innerHTML = '<p style="color: #fbbf24;">⚠️  OCR skipped - you will enter text manually in Review tab</p>';
@@ -2684,7 +2684,8 @@
                 document.getElementById('skipOcrBtn').disabled = true;
                 document.getElementById('proceedCleanBtn').classList.remove('hidden');
                 enableTab('clean');
-            }
+                switchTab('clean');
+            //}
         });
 
         document.getElementById('proceedCleanBtn').addEventListener('click', () => {
