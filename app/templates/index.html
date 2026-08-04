@@ -638,7 +638,7 @@
                             
                             <button id="exportJsonBtn"
                                 class="px-8 py-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-lg">
-                                { } Export Master JSON
+                                { } Export Combined JSON
                             </button>
                         </div>
 
@@ -3329,7 +3329,7 @@
             updateExportSummary();
         });
 
-        // Event Listener for Master-JSON Export
+        // Event Listener for Combined-JSON Export
         document.getElementById('exportJsonBtn').addEventListener('click', async () => {
             if (!currentProject) {
                 alert("Please open a project first.");
@@ -3343,7 +3343,7 @@
                 btn.disabled = true;
                 btn.textContent = '⏳ Generating...';
 
-                const response = await fetch(`/api/project/${currentProject.project_id}/export_master_json`);
+                const response = await fetch(`/api/project/${currentProject.project_id}/export_combined_json`);
                 
                 if (!response.ok) {
                     const errorData = await response.json(); 
@@ -3364,7 +3364,7 @@
                 const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
                 
                 a.href = url;
-                a.download = `${currentProject.project_name}_${prefix}master_data_${timestamp}.json`;
+                a.download = `${currentProject.project_name}_${prefix}combined_data_${timestamp}.json`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
