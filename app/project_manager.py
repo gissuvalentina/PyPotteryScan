@@ -506,12 +506,12 @@ class ProjectManager:
             print(f"Error loading few-shot examples: {e}")
             return None
 
-    def get_master_project_data(self, project_id: str) -> List[Dict]:
+    def get_combined_project_data(self, project_id: str) -> List[Dict]:
         """
-        Create a "master" json file.
+        Create a "combined" json file.
         One entry per image, containing the full text and a list of bounding boxes.
         """
-        master_data = []
+        combined_data = []
         
         # Define path
         annotations_path = self.get_project_path(project_id, 'annotations')
@@ -604,9 +604,9 @@ class ProjectManager:
                     image_entry["full_text_corrected"] = "\n".join(all_corrected_parts)
                     image_entry["full_text_original"] = "\n".join(all_original_parts)
                     
-                    master_data.append(image_entry)
+                    combined_data.append(image_entry)
                     
             except Exception as e:
                 print(f"Error in json file: {json_file.name}: {e}")
                 
-        return master_data
+        return combined_data

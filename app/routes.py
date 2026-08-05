@@ -945,10 +945,10 @@ def get_fewshot_examples(project_id):
         return jsonify({'error': str(e)}), 500
 
 
-@project_bp.route('/<project_id>/export_master_json', methods=['GET'])
-def export_master_json(project_id):
+@project_bp.route('/<project_id>/export_combined_json', methods=['GET'])
+def export_combined_json(project_id):
     project = project_manager.get_project(project_id)
-    data = project_manager.get_master_project_data(project_id)
+    data = project_manager.get_combined_project_data(project_id)
     
     if not data:
         return jsonify({"error": "No data found"}), 404
